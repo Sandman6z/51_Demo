@@ -1,0 +1,180 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/10/2018 19:49:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          /*   超声波模块的TRIG管脚接在单片机的P21口，ECHO管脚接在单片机的P20口 其他的电源管脚接在单片机
+   2              开发板上电源口即可。      */
+   3          
+   4          
+   5          #include"reg51.h"
+   6          
+   7          #include <intrins.h>
+   8          sbit RX=P2^1;
+   9          sbit TX=P2^0;
+  10          unsigned int  time=0;
+  11          unsigned int  timer=0;
+  12          unsigned char posit=0;
+  13          unsigned long S=0;
+  14          bit      flag =0;
+  15          //--定义使用的IO--//
+  16          #define GPIO_DIG P0
+  17          
+  18          sbit LSA=P2^2;
+  19          sbit LSB=P2^3;
+  20          sbit LSC=P2^4;
+  21          
+  22          //--定义全局变量--//
+  23          unsigned char code DIG_CODE[17]={
+  24          0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
+  25          0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};
+  26          //0、1、2、3、4、5、6、7、8、9、A、b、C、d、E、F的显示码
+  27          unsigned char disbuff[4]     ={ 0,0,0,0,};
+  28          /*******************************************************************************
+  29          * 函 数 名         : DigDisplay
+  30          * 函数功能       : 使用数码管显示
+  31          * 输    入         : 无
+  32          * 输    出         : 无
+  33          *******************************************************************************/
+  34          void DigDisplay()
+  35          {
+  36   1        unsigned char i;
+  37   1        unsigned int j;
+  38   1        for(i=0;i<8;i++)
+  39   1        {
+  40   2          switch(i)  //位选，选择点亮的数码管，
+  41   2          {
+  42   3            case(0):
+  43   3              LSA=0;LSB=0;LSC=0; break;//显示第0位
+  44   3            case(1):
+  45   3              LSA=1;LSB=0;LSC=0; break;//显示第1位
+  46   3            case(2):
+  47   3              LSA=0;LSB=1;LSC=0; break;//显示第2位
+  48   3            case(3):
+  49   3              LSA=1;LSB=1;LSC=0; break;//显示第3位
+  50   3            case(4):
+  51   3              LSA=0;LSB=0;LSC=1; break;//显示第4位
+  52   3            case(5):
+  53   3              LSA=1;LSB=0;LSC=1; break;//显示第5位
+  54   3            case(6):
+  55   3              LSA=0;LSB=1;LSC=1; break;//显示第6位
+C51 COMPILER V9.59.0.0   MAIN                                                              06/10/2018 19:49:11 PAGE 2   
+
+  56   3            case(7):
+  57   3              LSA=1;LSB=1;LSC=1; break;//显示第7位  
+  58   3          }
+  59   2          GPIO_DIG=disbuff[i];//发送段码
+  60   2          j=10;            //扫描间隔时间设定
+  61   2          while(j--); 
+  62   2          GPIO_DIG=0x00;//消隐
+  63   2        }
+  64   1      }
+  65          /********************************************************/
+  66              void Conut(void)
+  67            {
+  68   1         time=TH0*256+TL0;
+  69   1         TH0=0;
+  70   1         TL0=0;
+  71   1        
+  72   1         S= (long)(time*0.17);     //算出来是CM
+  73   1         if((S>=4000)||flag==1) //超出测量范围显示“ERR0”
+  74   1         {   
+  75   2          flag=0;
+  76   2          disbuff[0]=0x3f;     //“-”
+  77   2          disbuff[1]=0x50;     //“-”
+  78   2          disbuff[2]=0x50;     //“-”
+  79   2          disbuff[3]=0x79;     //“-”
+  80   2         }
+  81   1         else
+  82   1         {
+  83   2          disbuff[3]=DIG_CODE[S%10000/1000];
+  84   2          disbuff[2]=DIG_CODE[S%1000/100];
+  85   2          disbuff[1]=DIG_CODE[S%100/10];
+  86   2          disbuff[0]=DIG_CODE[S%10/1];
+  87   2         }
+  88   1        }
+  89          /********************************************************/
+  90               void zd0() interrupt 1      //T0中断用来计数器溢出,超过测距范围
+  91            {
+  92   1          flag=1;              //中断溢出标志
+  93   1        }
+  94          /********************************************************/
+  95             void  zd3()  interrupt 3      //T1中断用来扫描数码管和计800MS启动模块
+  96            {
+  97   1         TH1=0xf8;
+  98   1         TL1=0x30;
+  99   1         DigDisplay();
+ 100   1         timer++;
+ 101   1         if(timer>=100)
+ 102   1         {
+ 103   2          timer=0;
+ 104   2          TX=1;                     //800MS  启动一次模块
+ 105   2          _nop_(); 
+ 106   2          _nop_(); 
+ 107   2          _nop_(); 
+ 108   2          _nop_(); 
+ 109   2          _nop_(); 
+ 110   2          _nop_(); 
+ 111   2          _nop_(); 
+ 112   2          _nop_(); 
+ 113   2          _nop_(); 
+ 114   2          _nop_(); 
+ 115   2          _nop_(); 
+ 116   2          _nop_(); 
+ 117   2          _nop_(); 
+C51 COMPILER V9.59.0.0   MAIN                                                              06/10/2018 19:49:11 PAGE 3   
+
+ 118   2          _nop_(); 
+ 119   2          _nop_(); 
+ 120   2          _nop_(); 
+ 121   2          _nop_();
+ 122   2          _nop_(); 
+ 123   2          _nop_(); 
+ 124   2          _nop_(); 
+ 125   2          _nop_();
+ 126   2          TX=0;
+ 127   2         } 
+ 128   1        }
+ 129          /*********************************************************/
+ 130          
+ 131            void  main(  void  )
+ 132          
+ 133            {  
+ 134   1          TMOD=0x11;       //设T0为方式1，GATE=1；
+ 135   1        TH0=0;
+ 136   1        TL0=0;          
+ 137   1        TH1=0xf8;      //2MS定时
+ 138   1        TL1=0x30;
+ 139   1        ET0=1;             //允许T0中断
+ 140   1        ET1=1;         //允许T1中断
+ 141   1        TR1=1;         //开启定时器
+ 142   1        EA=1;        //开启总中断
+ 143   1      
+ 144   1        while(1)
+ 145   1        {
+ 146   2         while(!RX);    //当RX为零时等待
+ 147   2         TR0=1;         //开启计数
+ 148   2         while(RX);     //当RX为1计数并等待
+ 149   2         TR0=0;       //关闭计数
+ 150   2           Conut();     //计算
+ 151   2        }
+ 152   1      
+ 153   1        }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    527    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

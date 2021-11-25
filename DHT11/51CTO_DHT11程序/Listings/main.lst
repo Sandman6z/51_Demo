@@ -1,0 +1,466 @@
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /*********************说明**************************
+   2          程序运行时 会对模块进行预热 保证读取第一个数值的精确
+   3          预热时间大概为4秒左右
+   4          程序初始化时将会提示你设置最大温湿度 
+   5          H1  最高温度   L1   最低温度
+   6          H2  最高湿度   L2   最低湿度
+   7          按钮K1温度加    按钮K2温度减
+   8          设置完成后  按K3   即确定按钮 开始监控报警   
+   9          
+  10                                              ----------SWorld
+  11          ****************************************************/
+  12          #include <reg52.h>  
+  13          #define GPIO_DIG P0
+  14          #define OK 1 
+  15          #define ERROR 0  
+  16          #define NUMBER  20  
+  17          #define SIZE  5 
+  18          
+  19          sbit WEC=P2^3;             //段选
+  20          sbit DUC=P2^2;              //位选
+  21          sbit dht11 = P2^0;          //dht 接口    只要接一个就行   接dht11   data0接口  NC不用管
+  22          sbit add=P2^5;                //增加    连接K2
+  23          sbit sub=P2^4;                //减少    连接K1
+  24          sbit ok=P2^6;                 //确定    连接K3
+  25          sbit bell=P2^7;               //蜂鸣器接口  连接蜂鸣器
+  26          void Delay_1ms(unsigned int ms); 
+  27          unsigned char ReadTempAndHumi(void);  
+  28          
+  29          
+  30          unsigned char flag;   
+  31          unsigned char code array[12]= { 
+  32                   0x3f,0x06,0x5b,0x4f,0x66, 
+  33                   0x6d,0x7d,0x07,0x7f,0x6f,0x38,0x76                       //L  H
+  34                   }; 
+  35          
+  36          unsigned char DisplayData[8];                               //用来存放要显示的8位数的值
+  37          unsigned int HTemp,LTemp,HHumi,LHumi,setok;               //用来存放最大温湿度  以及是否设置好温湿度
+  38                   
+  39          int temp_value, humi_value;                                 //温湿度数值存放
+  40          void InitTime(void); 
+  41          void Delay_1ms(unsigned int ms); 
+  42          void SMG_Display(unsigned int value,unsigned int way ) ;       //显示部分
+  43          
+  44                   
+  45          unsigned char status; 
+  46          unsigned char value_array[5];   
+  47          unsigned char ReadValue(void); 
+  48          
+  49          
+  50          void Delay_1ms(unsigned int ms) 
+  51          { 
+  52   1         unsigned int x, y; 
+  53   1         for(x = ms; x > 0; x--) 
+  54   1         { 
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 2   
+
+  55   2          for(y = 124; y > 0; y--); 
+  56   2         } 
+  57   1      } 
+  58          
+  59          
+  60          void  Delay_10us(void) 
+  61          { 
+  62   1         unsigned char  i; 
+  63   1            i--; 
+  64   1            i--; 
+  65   1            i--; 
+  66   1            i--; 
+  67   1            i--; 
+  68   1            i--; 
+  69   1      }  
+  70          
+  71          
+  72          unsigned char ReadValue(void) 
+  73          { 
+  74   1         unsigned char count, value = 0, i; 
+  75   1         status = OK;   
+  76   1         for(i = 8; i > 0; i--) 
+  77   1         { 
+  78   2            value <<= 1; 
+  79   2            count = 0; 
+  80   2            while(dht11 == 0 && count++ < NUMBER); 
+  81   2            if(count >= NUMBER) 
+  82   2            { 
+  83   3             status = ERROR;
+  84   3             return 0;    
+  85   3            } 
+  86   2            Delay_10us(); 
+  87   2            Delay_10us(); 
+  88   2            Delay_10us(); 
+  89   2          if(dht11 != 0) 
+  90   2          { 
+  91   3             value++; 
+  92   3             while(dht11 != 0 && count++ < NUMBER) 
+  93   3             { 
+  94   4                dht11 = 1; 
+  95   4             } 
+  96   3             if(count >= NUMBER) 
+  97   3             { 
+  98   4                status = ERROR;  
+  99   4                return 0; 
+ 100   4             }  
+ 101   3          } 
+ 102   2         }  
+ 103   1         return (value); 
+ 104   1      } 
+ 105          
+ 106          unsigned char ReadTempAndHumi(void) 
+ 107          {  
+ 108   1         unsigned char i = 0, check_value = 0,count = 0; 
+ 109   1         EA = 0; 
+ 110   1         dht11 = 0;     
+ 111   1         Delay_1ms(20);   
+ 112   1         dht11 = 1;     
+ 113   1         Delay_10us(); 
+ 114   1         Delay_10us(); 
+ 115   1         Delay_10us(); 
+ 116   1         Delay_10us();  
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 3   
+
+ 117   1         if(dht11 != 0)    
+ 118   1         { 
+ 119   2          EA = 1; 
+ 120   2          return ERROR; 
+ 121   2         } 
+ 122   1         else 
+ 123   1         { 
+ 124   2          while(dht11 == 0 && count++ < NUMBER);   
+ 125   2          if(count >= NUMBER)  
+ 126   2          { 
+ 127   3           dht11 = 1; 
+ 128   3           EA = 1; 
+ 129   3           return ERROR;   
+ 130   3          } 
+ 131   2          count = 0; 
+ 132   2          dht11 = 1;
+ 133   2          while(dht11 != 0 && count++ < NUMBER); 
+ 134   2          if(count >= NUMBER) 
+ 135   2          { 
+ 136   3           dht11 = 1; 
+ 137   3           EA = 1; 
+ 138   3           return ERROR;  
+ 139   3          }  
+ 140   2             for(i = 0; i < SIZE; i++) 
+ 141   2          { 
+ 142   3           value_array[i] = ReadValue(); 
+ 143   3           if(status == ERROR)
+ 144   3           { 
+ 145   4            dht11 = 1; 
+ 146   4            EA = 1;    
+ 147   4            return ERROR;  
+ 148   4           } 
+ 149   3           if(i != SIZE - 1)  
+ 150   3           { 
+ 151   4            check_value += value_array[i];  
+ 152   4           } 
+ 153   3          }
+ 154   2          if(check_value == value_array[SIZE - 1]) 
+ 155   2          { 
+ 156   3           humi_value = value_array[0] * 10; 
+ 157   3           temp_value = value_array[2] * 10; 
+ 158   3           dht11 = 1; 
+ 159   3           EA = 1; 
+ 160   3           return OK;   
+ 161   3          } 
+ 162   2          else 
+ 163   2          { 
+ 164   3           EA = 1; 
+ 165   3           return ERROR; 
+ 166   3          } 
+ 167   2         }         
+ 168   1      } 
+ 169          /**************************************************************
+ 170          键盘扫描子程序
+ 171          **************************************************************/
+ 172          unsigned char Key_Scan()
+ 173          {
+ 174   1        unsigned char keyValue = 0 , i; //保存键值
+ 175   1      
+ 176   1        //--检测按键1--//
+ 177   1        if (ok != 1)    //检测按键K3是否按下
+ 178   1        {
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 4   
+
+ 179   2          Delay_1ms(10);  //消除抖动
+ 180   2      
+ 181   2          if (ok != 1)  //再次检测按键是否按下
+ 182   2          {
+ 183   3            keyValue = 3;
+ 184   3            i = 0;
+ 185   3            while ((i<50) && (ok != 1))  //检测按键是否松开
+ 186   3            {
+ 187   4              Delay_1ms(10);
+ 188   4              i++;
+ 189   4            }
+ 190   3          }
+ 191   2        }
+ 192   1          //--检测按键1--//
+ 193   1        if (add != 1)   //检测按键K1是否按下
+ 194   1        {
+ 195   2          Delay_1ms(10);  //消除抖动
+ 196   2      
+ 197   2          if (add!= 1)  //再次检测按键是否按下
+ 198   2          {
+ 199   3            keyValue = 2;
+ 200   3            i = 0;
+ 201   3            while ((i<50) && (add != 1))   //检测按键是否松开
+ 202   3            {
+ 203   4              Delay_1ms(10);
+ 204   4              i++;
+ 205   4            }
+ 206   3          }
+ 207   2        }
+ 208   1          //--检测按键1--//
+ 209   1        if (sub != 1)   //检测按键K2是否按下
+ 210   1        {
+ 211   2          Delay_1ms(10);//消除抖动
+ 212   2      
+ 213   2          if (sub!= 1)  //再次检测按键是否按下
+ 214   2          {
+ 215   3            keyValue = 1;
+ 216   3            i = 0;
+ 217   3            while ((i<50) && (sub != 1))   //检测按键是否松开
+ 218   3            {
+ 219   4              Delay_1ms(10);
+ 220   4              i++;
+ 221   4            }
+ 222   3          }
+ 223   2        
+ 224   2        }
+ 225   1      
+ 226   1        return keyValue;   //将读取到键值的值返回
+ 227   1      }
+ 228          
+ 229          
+ 230          /*******************************************************************************
+ 231          * 函 数 名         : DigDisplay
+ 232          * 函数功能       : 使用数码管显示
+ 233          * 输    入         : 无
+ 234          * 输    出         : 无
+ 235          *******************************************************************************/
+ 236          void DigDisplay()
+ 237          {
+ 238   1        unsigned char i;
+ 239   1        unsigned int j;
+ 240   1        for(i=0;i<8;i++)
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 5   
+
+ 241   1        {
+ 242   2          WEC=1;DUC=0;
+ 243   2          switch(i)  //位选，选择点亮的数码管，
+ 244   2          {
+ 245   3            case(0):
+ 246   3              GPIO_DIG=0x7F; break;//显示第0位
+ 247   3            case(1):
+ 248   3              GPIO_DIG=0xBF; break;//显示第1位
+ 249   3            case(2):
+ 250   3              GPIO_DIG=0xDF; break;//显示第2位
+ 251   3            case(3):
+ 252   3              GPIO_DIG=0xEF; break;//显示第3位
+ 253   3            case(4):
+ 254   3              GPIO_DIG=0xF7; break;//显示第4位
+ 255   3            case(5):
+ 256   3              GPIO_DIG=0xFB; break;//显示第5位
+ 257   3            case(6):
+ 258   3              GPIO_DIG=0xFD; break;//显示第6位
+ 259   3            case(7):
+ 260   3              GPIO_DIG=0xFE; break;//显示第7位  
+ 261   3          }
+ 262   2          WEC=0;DUC=1;
+ 263   2          GPIO_DIG=DisplayData[i];//发送段码
+ 264   2          j=50;            //扫描间隔时间设定
+ 265   2          while(j--); 
+ 266   2          GPIO_DIG=0x00;//消隐
+ 267   2        }
+ 268   1      }
+ 269            
+ 270          
+ 271                   
+ 272          void main(void) 
+ 273          { 
+ 274   1        unsigned char mark = 0; 
+ 275   1        Delay_1ms(1000); 
+ 276   1        ReadTempAndHumi(); 
+ 277   1        Delay_1ms(3000); 
+ 278   1        InitTime(); 
+ 279   1        WEC=0;DUC=0;
+ 280   1        HTemp=30,LTemp=20;
+ 281   1        HHumi=100,LHumi=20;
+ 282   1        bell=1,setok=1;
+ 283   1        while(1) 
+ 284   1        { 
+ 285   2          switch(setok)
+ 286   2          {
+ 287   3            case 1:
+ 288   3              DisplayData[7]=array[11]; 
+ 289   3              DisplayData[6]=array[1];
+ 290   3              DisplayData[4]=array[HTemp/10];
+ 291   3              DisplayData[3]=array[HTemp%10];
+ 292   3              switch(Key_Scan())
+ 293   3              {
+ 294   4                case 1:
+ 295   4                  HTemp-=2;
+ 296   4                  break;
+ 297   4                case 2:
+ 298   4                  HTemp+=2;
+ 299   4                  break;
+ 300   4                case 3:
+ 301   4                  setok=2;
+ 302   4                  break;
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 6   
+
+ 303   4              }
+ 304   3              break;
+ 305   3            case 2:
+ 306   3              DisplayData[7]=array[10]; 
+ 307   3              DisplayData[6]=array[1];
+ 308   3              DisplayData[4]=array[LTemp/10];
+ 309   3              DisplayData[3]=array[LTemp%10];
+ 310   3              switch(Key_Scan())
+ 311   3              {
+ 312   4                case 1:
+ 313   4                  LTemp-=2;
+ 314   4                  break;
+ 315   4                case 2:
+ 316   4                  LTemp+=2;
+ 317   4                  break;
+ 318   4                case 3:
+ 319   4                  setok=3;
+ 320   4                  break;
+ 321   4              }
+ 322   3              break;
+ 323   3            case 3:
+ 324   3              DisplayData[7]=array[11]; 
+ 325   3              DisplayData[6]=array[2];
+ 326   3              DisplayData[4]=array[HHumi/100];
+ 327   3              DisplayData[3]=array[HHumi%100/10];
+ 328   3              DisplayData[2]=array[HHumi%10];
+ 329   3              switch(Key_Scan())
+ 330   3              {
+ 331   4                case 1:
+ 332   4                  HHumi-=2;
+ 333   4                  break;
+ 334   4                case 2:
+ 335   4                  HHumi+=2;
+ 336   4                  break;
+ 337   4                case 3:
+ 338   4                  setok=4;
+ 339   4                  break;
+ 340   4              }
+ 341   3              break;
+ 342   3            case 4:
+ 343   3              DisplayData[7]=array[10]; 
+ 344   3              DisplayData[6]=array[2];
+ 345   3              DisplayData[4]=array[LHumi/100];
+ 346   3              DisplayData[3]=array[LHumi%100/10];
+ 347   3              DisplayData[2]=array[LHumi%10];
+ 348   3              switch(Key_Scan())
+ 349   3              {
+ 350   4                case 1:
+ 351   4                  LHumi-=2;
+ 352   4                  break;
+ 353   4                case 2:
+ 354   4                  LHumi+=2;
+ 355   4                  break;
+ 356   4                case 3:
+ 357   4                  setok=5;
+ 358   4                  break;
+ 359   4              }
+ 360   3              break;
+ 361   3            case 5:
+ 362   3            DisplayData[4]=0x00;
+ 363   3            if(flag == 30) 
+ 364   3            { 
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 7   
+
+ 365   4              flag = 0; 
+ 366   4              mark++; 
+ 367   4              ReadTempAndHumi(); 
+ 368   4              if(temp_value<LTemp*10||temp_value>HTemp*10||humi_value<LHumi*10||humi_value>HHumi*10)
+ 369   4              {
+ 370   5                bell=0;
+ 371   5              }
+ 372   4              else
+ 373   4              {
+ 374   5                bell=1;
+ 375   5              }
+ 376   4      //        if(humi_value<LHumi||humi_value>HHumi)
+ 377   4      //        {
+ 378   4      //          bell=0;
+ 379   4      //        }
+ 380   4      //        else
+ 381   4      //        {
+ 382   4      //          bell=1;
+ 383   4      //        }
+ 384   4            } 
+ 385   3            SMG_Display(temp_value,0); 
+ 386   3            SMG_Display(humi_value,1); 
+ 387   3            break;
+ 388   3         }
+ 389   2          DigDisplay();
+ 390   2       } 
+ 391   1      }  
+ 392          void InitTime(void) 
+ 393          { 
+ 394   1        TH0 = (unsigned char)((65535U - 50000) >> 8); 
+ 395   1        TL0 = (unsigned char)(65535U - 50000) ; 
+ 396   1        TMOD = 0X01; 
+ 397   1        TR0 = 1; 
+ 398   1        ET0 = 1; 
+ 399   1        EA = 1; 
+ 400   1      }  
+ 401          
+ 402          
+ 403          void SMG_Display(unsigned int value,unsigned int way ) 
+ 404          { 
+ 405   1         unsigned char ge, bai, shi; 
+ 406   1         ge = value % 10; 
+ 407   1         shi = value % 100 / 10; 
+ 408   1         bai = value % 1000 / 100; 
+ 409   1         if(way==0)
+ 410   1         {     
+ 411   2           DisplayData[7]=array[bai]; 
+ 412   2           DisplayData[6]=array[shi]|0x80;      
+ 413   2           DisplayData[5]=array[ge];  
+ 414   2         }
+ 415   1         else
+ 416   1         {
+ 417   2           DisplayData[3]=array[bai]; 
+ 418   2           DisplayData[2]=array[shi]|0x80;      
+ 419   2           DisplayData[1]=array[ge];  
+ 420   2         }
+ 421   1      }  
+ 422          
+ 423          void timer(void) interrupt 1 
+ 424          { 
+ 425   1         TH0 = (unsigned char)((65535 - 50000) >> 8);  
+ 426   1         TL0 = (unsigned char)(65535 - 50000); 
+C51 COMPILER V9.55   MAIN                                                                  12/25/2016 14:41:49 PAGE 8   
+
+ 427   1         flag++; 
+ 428   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1335    ----
+   CONSTANT SIZE    =     12    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     29       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

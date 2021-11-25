@@ -1,0 +1,349 @@
+C51 COMPILER V9.59.0.0   DHT11                                                             05/05/2019 22:27:44 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DHT11
+OBJECT MODULE PLACED IN dht11.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE dht11.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include <stdio.h>
+   3          #include "intrins.h"
+   4          #include "codetab.h"
+   5          #include "LQ12864.h"
+   6          
+   7          sbit dht11=P2^0;
+   8          sbit key1=P0^5;//切换 
+   9          sbit key2=P0^6;//+
+  10          sbit key3=P0^7;//-
+  11          sbit led=P1^7;
+  12          sbit beep=P1^6;
+  13          
+  14          unsigned int dht11_data[5],flag_1=0,flag_dec=0,flag_add=0;
+  15          unsigned char Tem=0,Hum=0,y,DATA0,HN=0,TemH=25,TemL=17,HumH=28,HumL=22;
+  16          unsigned char TemData_shi,TemData_ge,TemData_dec1,TemData_dec2,TemData_dec3;
+  17          unsigned char HumData_shi,HumData_ge,HumData_dec1,HumData_dec2,HumData_dec3;
+  18          unsigned char read();
+  19          void start();
+  20          void UartInit(void);
+  21          void Delay10ms();
+  22          void Delay10us();
+  23          void show();
+  24          void key();
+  25          void Data();
+  26          void baojing();
+  27          void main()
+  28          {
+  29   1        led=0;
+  30   1        OLED_Init();
+  31   1        
+  32   1        //UartInit();
+  33   1        while(1)
+  34   1        {  
+  35   2          start();
+  36   2          dht11_data[0]=read();
+  37   2          dht11_data[1]=read();
+  38   2          dht11_data[2]=read();
+  39   2          dht11_data[3]=read();
+  40   2          dht11_data[4]=read(); 
+  41   2          key();
+  42   2          Data();
+  43   2          show();
+  44   2          baojing();
+  45   2          for(y=0;y<86;y++)
+  46   2          {
+  47   3            Delay10ms();
+  48   3          }
+  49   2          if(flag_1>=4)
+  50   2          {
+  51   3                flag_1=0;
+  52   3          }
+  53   2        }
+  54   1      }
+  55          void Delay10us()    //@12.000MHz
+C51 COMPILER V9.59.0.0   DHT11                                                             05/05/2019 22:27:44 PAGE 2   
+
+  56          {
+  57   1        unsigned char i;
+  58   1        
+  59   1          _nop_();
+  60   1          i = 2;
+  61   1          while (--i);
+  62   1      }
+  63          void Delay10ms()    //@12.000MHz
+  64          {
+  65   1        unsigned char i, j;
+  66   1      
+  67   1        i = 20;
+  68   1        j = 113;
+  69   1        do
+  70   1        {
+  71   2          while (--j);
+  72   2        } while (--i);
+  73   1      }
+  74          
+  75          void UartInit(void)   //9600bps@12.000MHz
+  76          {
+  77   1        PCON &= 0x7F;   //波特率不倍速
+  78   1        SCON = 0x50;    //8位数据,可变波特率
+  79   1        TMOD &= 0x0F;   //清除定时器1模式位
+  80   1        TMOD |= 0x20;   //设定定时器1为8位自动重装方式
+  81   1        TL1 = 0xFD;   //设定定时初值
+  82   1        TH1 = 0xFD;   //设定定时器重装值
+  83   1        ET1 = 0;    //禁止定时器1中断
+  84   1        TR1 = 1;    //启动定时器1
+  85   1      }
+  86          
+  87          void start()
+  88          {
+  89   1         dht11=1;
+  90   1         _nop_();
+  91   1         dht11=0;
+  92   1         Delay10ms();
+  93   1         Delay10ms();
+  94   1         dht11=1;
+  95   1         Delay10us();
+  96   1         Delay10us();
+  97   1         Delay10us();
+  98   1         while(dht11==0);
+  99   1         while(dht11==1);
+ 100   1         
+ 101   1      }
+ 102          unsigned char read()
+ 103          {
+ 104   1        unsigned char i,bat=0;
+ 105   1        for(i=0;i<8;i++)
+ 106   1        {
+ 107   2          bat=bat<<1;
+ 108   2          while(dht11==0);
+ 109   2          Delay10us();
+ 110   2          Delay10us();
+ 111   2          Delay10us();
+ 112   2          if(dht11==1)
+ 113   2          {
+ 114   3            while(dht11==1);
+ 115   3            bat|=0x01;
+ 116   3          }
+ 117   2        }
+C51 COMPILER V9.59.0.0   DHT11                                                             05/05/2019 22:27:44 PAGE 3   
+
+ 118   1         return bat;
+ 119   1      }
+ 120          void show()
+ 121          {   
+ 122   1          OLED_P16x16Ch(0,0,0);//温
+ 123   1          OLED_P16x16Ch(16,0,1);//度
+ 124   1          OLED_P8x16Ch(32,0,26); //:
+ 125   1          OLED_P8x16Strone(40,0,TemData_shi+'0');
+ 126   1          OLED_P8x16Strone(48,0,TemData_ge+'0');
+ 127   1          OLED_P8x16Ch(56,0,14); //.
+ 128   1          OLED_P8x16Strone(64,0,TemData_dec3+'0');
+ 129   1          //OLED_P8x16Strone(72,0,TemData_dec2+'0');
+ 130   1          //OLED_P8x16Strone(80,0,TemData_dec3+'0');
+ 131   1          OLED_P8x16Ch(72,0,95);//摄氏度符
+ 132   1          OLED_P8x16Ch(80,0,35);//C
+ 133   1          if(flag_1==0)
+ 134   1          {
+ 135   2            OLED_P16x16Ch(0,2,6);//上阳码
+ 136   2            OLED_P16x16Ch(64,2,3);//下
+ 137   2            OLED_P16x16Ch(0,6,2);//上
+ 138   2            OLED_P16x16Ch(64,6,3);//下
+ 139   2          }
+ 140   1          else if(flag_1==1)
+ 141   1          { 
+ 142   2            OLED_P16x16Ch(0,2,2);//上
+ 143   2            OLED_P16x16Ch(64,2,7);//下阳码
+ 144   2            OLED_P16x16Ch(0,6,2);//上
+ 145   2            OLED_P16x16Ch(64,6,3);//下  
+ 146   2          }
+ 147   1            if(flag_1==2)
+ 148   1          {
+ 149   2            OLED_P16x16Ch(0,2,2);//上
+ 150   2            OLED_P16x16Ch(64,2,3);//下
+ 151   2            OLED_P16x16Ch(0,6,6);//上阳码
+ 152   2            OLED_P16x16Ch(64,6,3);//下
+ 153   2          }
+ 154   1          else if(flag_1==3)
+ 155   1          { 
+ 156   2            OLED_P16x16Ch(0,2,2);//上
+ 157   2            OLED_P16x16Ch(64,2,3);//下
+ 158   2            OLED_P16x16Ch(0,6,2);//上
+ 159   2            OLED_P16x16Ch(64,6,7);//下阳码
+ 160   2            
+ 161   2          }
+ 162   1          OLED_P8x16Ch(16,2,26); //：
+ 163   1          OLED_P8x16Strone(24,2,(TemH/10)+'0');
+ 164   1          OLED_P8x16Strone(32,2,(TemH%10)+'0');
+ 165   1          OLED_P8x16Ch(40,2,95);//摄氏度符
+ 166   1          OLED_P8x16Ch(48,2,35);//C
+ 167   1          OLED_P8x16Ch(80,2,26); //：
+ 168   1          OLED_P8x16Strone(88,2,(TemL/10)+'0');
+ 169   1          OLED_P8x16Strone(96,2,(TemL%10)+'0');
+ 170   1          OLED_P8x16Ch(104,2,95);//摄氏度符
+ 171   1          OLED_P8x16Ch(112,2,35);//C
+ 172   1      
+ 173   1          OLED_P16x16Ch(0,4,5);//湿
+ 174   1          OLED_P16x16Ch(16,4,1);//度
+ 175   1          OLED_P8x16Ch(32,4,26); //：
+ 176   1          OLED_P8x16Strone(40,4,HumData_shi+'0');
+ 177   1          OLED_P8x16Strone(48,4,HumData_ge+'0');
+ 178   1          OLED_P8x16Ch(56,4,14); //.  
+ 179   1          OLED_P8x16Strone(64,4,HumData_dec1+'0');
+C51 COMPILER V9.59.0.0   DHT11                                                             05/05/2019 22:27:44 PAGE 4   
+
+ 180   1          OLED_P8x16Strone(72,4,HumData_dec2+'0');
+ 181   1          OLED_P8x16Strone(80,4,HumData_dec3+'0');
+ 182   1          OLED_P8x16Ch(88,4,5);//%
+ 183   1          OLED_P8x16Strone(96,4,flag_1+'0');
+ 184   1        
+ 185   1          OLED_P8x16Ch(16,6,26); //：
+ 186   1          OLED_P8x16Strone(24,6,(HumH/10)+'0');
+ 187   1          OLED_P8x16Strone(32,6,(HumH%10)+'0');
+ 188   1          OLED_P8x16Ch(40,6,5);//%  
+ 189   1          OLED_P8x16Ch(80,6,26); //：
+ 190   1          OLED_P8x16Strone(88,6,(HumL/10)+'0');
+ 191   1          OLED_P8x16Strone(96,6,(HumL%10)+'0');
+ 192   1          OLED_P8x16Ch(104,6,5);//%
+ 193   1      
+ 194   1            
+ 195   1          if(DATA0==dht11_data[4])
+ 196   1            OLED_P8x16Strone(112,0,'Y'); 
+ 197   1          else 
+ 198   1            OLED_P8x16Strone(112,0,'N');
+ 199   1      }
+ 200          void key()
+ 201          {
+ 202   1        if(key1==0) 
+ 203   1        {   
+ 204   2           
+ 205   2          Delay10ms();   //消除抖动
+ 206   2          if(key1==0)  //再次判断按键是否按下
+ 207   2          { 
+ 208   3            led=1;
+ 209   3            flag_1++;
+ 210   3            
+ 211   3          }     
+ 212   2          while(!key1);//检测按键是否松开
+ 213   2          if(flag_1==4)
+ 214   2          {
+ 215   3            flag_1=0;
+ 216   3          }  
+ 217   2        }
+ 218   1        if(key2==0) 
+ 219   1        {
+ 220   2          Delay10ms();   //消除抖动
+ 221   2          if(key2==0)  //再次判断按键是否按下
+ 222   2          { 
+ 223   3            led=1;
+ 224   3            flag_add=1;     
+ 225   3          }
+ 226   2          while(!key2);//检测按键是否松开
+ 227   2        }
+ 228   1        if(key3==0) 
+ 229   1        {
+ 230   2          Delay10ms();   //消除抖动
+ 231   2          if(key3==0)  //再次判断按键是否按下
+ 232   2          {
+ 233   3            led=1;
+ 234   3            flag_dec=1;   
+ 235   3          }
+ 236   2          while(!key3);  //检测按键是否松开
+ 237   2        }
+ 238   1      }
+ 239          void Data()
+ 240          {
+ 241   1        if(flag_dec==1)
+C51 COMPILER V9.59.0.0   DHT11                                                             05/05/2019 22:27:44 PAGE 5   
+
+ 242   1        {
+ 243   2          if(flag_1==0)
+ 244   2          {
+ 245   3            TemH=TemH-1;
+ 246   3            flag_dec=0;
+ 247   3          }
+ 248   2          else if(flag_1==1)
+ 249   2          {
+ 250   3            TemL=TemL-1;
+ 251   3            flag_dec=0;
+ 252   3          }
+ 253   2          else if(flag_1==2)
+ 254   2          {
+ 255   3            HumH=HumH-1;
+ 256   3            flag_dec=0;
+ 257   3          }
+ 258   2          else if(flag_1==3)
+ 259   2          {
+ 260   3            HumL=HumL-1;
+ 261   3            flag_dec=0;
+ 262   3          }     
+ 263   2        }
+ 264   1        if(flag_add==1)
+ 265   1        {
+ 266   2          if(flag_1==0)
+ 267   2          {
+ 268   3            TemH=TemH+1;
+ 269   3            flag_add=0;
+ 270   3          }
+ 271   2          else if(flag_1==1)
+ 272   2          {
+ 273   3            TemL=TemL+1;
+ 274   3            flag_add=0;
+ 275   3          }
+ 276   2          else if(flag_1==2)
+ 277   2          {
+ 278   3            HumH=HumH+1;
+ 279   3            flag_add=0;
+ 280   3          }
+ 281   2          else if(flag_1==3)
+ 282   2          {
+ 283   3            HumL=HumL+1;
+ 284   3            flag_add=0;
+ 285   3          } 
+ 286   2        }
+ 287   1         TemData_shi=dht11_data[2]/10;
+ 288   1         TemData_ge=dht11_data[2]%10;
+ 289   1         TemData_dec1=dht11_data[3]/100;
+ 290   1         TemData_dec2=dht11_data[3]%100/10;
+ 291   1         TemData_dec3=dht11_data[3]%10;
+ 292   1         Tem=dht11_data[2];
+ 293   1      
+ 294   1         HumData_shi=dht11_data[0]/10;
+ 295   1         HumData_ge=dht11_data[0]%10;
+ 296   1         HumData_dec1=dht11_data[1]/100;
+ 297   1         HumData_dec2=dht11_data[1]%100/10;
+ 298   1         HumData_dec3=dht11_data[1]%10;
+ 299   1         Hum=dht11_data[0];
+ 300   1      
+ 301   1         DATA0=dht11_data[0]+dht11_data[1]+dht11_data[2]+dht11_data[3];
+ 302   1      }
+ 303          void baojing()
+C51 COMPILER V9.59.0.0   DHT11                                                             05/05/2019 22:27:44 PAGE 6   
+
+ 304          {
+ 305   1        if((Tem<=TemL)||(Tem>=TemH)||(Hum<=HumL)||(Hum>=HumH))
+ 306   1        {
+ 307   2          beep=0;
+ 308   2          led=1;
+ 309   2        }
+ 310   1        else
+ 311   1        {
+ 312   2          beep=1;
+ 313   2          led=0;
+ 314   2        }
+ 315   1      
+ 316   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2314    ----
+   CONSTANT SIZE    =   3368    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     35      22
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

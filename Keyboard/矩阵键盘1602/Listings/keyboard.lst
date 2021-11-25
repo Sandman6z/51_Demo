@@ -1,0 +1,208 @@
+C51 COMPILER V9.59.0.0   KEYBOARD                                                          03/06/2019 18:24:16 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE KEYBOARD
+OBJECT MODULE PLACED IN .\Objects\keyboard.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE keyboard.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\
+                    -keyboard.lst) TABS(2) OBJECT(.\Objects\keyboard.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <intrins.h>                        //包含_nop_( )空函数指令的头文件
+   3          #define uchar unsigned char
+   4          #define uint unsigned int
+   5          #define out P0
+   6          sbit RS=P2^0;                                         //位变量
+   7          sbit RW=P2^1;                                        //位变量
+   8          sbit E=P2^2; 
+   9          void lcd_initial(void);                                                //位变量void lcd _initial(void);   
+             -                                     //LCD初始化函数
+  10          void check_busy(void);                                 //检查忙标志函数
+  11          void write_command(uchar com);                         //写命令函数
+  12          void write_data(uchar dat);                        //写数据函数
+  13          void string(uchar ad ,uchar *s);
+  14          void delay(uint);                                //延时函数
+  15          unsigned char key_scan()
+  16          {
+  17   1              unsigned char key_temp0,key_temp1;
+  18   1              unsigned char key_num=0;
+  19   1              P1=0x0f;
+  20   1              key_temp0=P1;
+  21   1              if(key_temp0!=0x0f)
+  22   1              {
+  23   2                      delay(5);
+  24   2                      key_temp0=P1;
+  25   2                      if(key_temp0!=0x0f)
+  26   2                      {
+  27   3                              P1=0xf0;
+  28   3                              key_temp1=P1;
+  29   3                              if(key_temp0==0x0e)
+  30   3                              {
+  31   4                                      switch(key_temp1)
+  32   4                                      {
+  33   5                                              case 0xe0: key_num=4;break;
+  34   5                                              case 0xd0: key_num=3;break;
+  35   5                                              case 0xb0: key_num=2;break;
+  36   5                                              case 0x70: key_num=1;break;
+  37   5                                              default:key_num=0;break;
+  38   5                                      }
+  39   4                              }
+  40   3                              else if(key_temp0==0x0d)
+  41   3                              {
+  42   4                                      switch(key_temp1)
+  43   4                                      {
+  44   5                                              case 0xe0: key_num=8;break;
+  45   5                                              case 0xd0: key_num=7;break;
+  46   5                                              case 0xb0: key_num=6;break;
+  47   5                                              case 0x70: key_num=5;break;
+  48   5                                              default:key_num=0;break;
+  49   5                                      }
+  50   4                              }
+  51   3                              else if(key_temp0==0x0b)
+  52   3                              {
+  53   4                                      switch(key_temp1)
+C51 COMPILER V9.59.0.0   KEYBOARD                                                          03/06/2019 18:24:16 PAGE 2   
+
+  54   4                                      {
+  55   5                                              case 0xe0: key_num=12;break;
+  56   5                                              case 0xd0: key_num=11;break;
+  57   5                                              case 0xb0: key_num=10;break;
+  58   5                                              case 0x70: key_num=9;break;
+  59   5                                              default:key_num=0;break;
+  60   5                                      }
+  61   4                              }
+  62   3                              else if(key_temp0==0x07)
+  63   3                              {
+  64   4                                      switch(key_temp1)
+  65   4                                      {
+  66   5                                              case 0xe0: key_num=16;break;
+  67   5                                              case 0xd0: key_num=15;break;
+  68   5                                              case 0xb0: key_num=14;break;
+  69   5                                              case 0x70: key_num=13;break;
+  70   5                                              default:key_num=0;break;
+  71   5                                      }
+  72   4                              }
+  73   3                      }
+  74   2              }
+  75   1      return key_num;
+  76   1      }
+  77          
+  78          
+  79          void main(void)                         //主函数
+  80          {
+  81   1              unsigned char key_num;
+  82   1              lcd_initial( );                        //调用对LCD初始化函数
+  83   1         do
+  84   1         {
+  85   2                              key_num=key_scan();
+  86   2                              string(0x82,"Yu Wang wang");                //显示的第1行字符串
+  87   2                        switch(key_num)
+  88   2                              {
+  89   3                                      case 1 :string(0xC8,"1");  break;
+  90   3                                      case 2 :string(0xC8,"2");  break;
+  91   3                                      case 3 :string(0xC8,"3");  break;
+  92   3                                      case 4 :string(0xC8,"4");  break;
+  93   3                                      case 5 :string(0xC8,"5");  break;
+  94   3                                      case 6 :string(0xC8,"6");  break;
+  95   3                                      case 7 :string(0xC8,"7");  break;
+  96   3                                      case 8 :string(0xC8,"8");  break;
+  97   3                                      case 9 :string(0xC8,"9");  break;
+  98   3                                      case 10:string(0xC8,"10"); break;
+  99   3                                      case 11:string(0xC8,"11"); break;
+ 100   3                                      case 12:string(0xC8,"12"); break;
+ 101   3                                      case 13:string(0xC8,"13"); break;
+ 102   3                                      case 14:string(0xC8,"14"); break;
+ 103   3                                      case 15:string(0xC8,"15"); break;
+ 104   3                                      case 16:string(0xC8,"16"); break;
+ 105   3                              }        
+ 106   2                              delay(100);                         //延时
+ 107   2                              write_command(0x01);                //写入清屏命令
+ 108   2                              delay(1);                        //延时
+ 109   2               }while(1);
+ 110   1      }
+ 111          void delay(uint j)                        //1ms延时子程序
+ 112          {
+ 113   1              uchar i=250;
+ 114   1              for(;j>0;j--)
+ 115   1      {
+C51 COMPILER V9.59.0.0   KEYBOARD                                                          03/06/2019 18:24:16 PAGE 3   
+
+ 116   2                      while(--i);
+ 117   2                      i=249;
+ 118   2                      while(--i);
+ 119   2                      i=250;
+ 120   2              }
+ 121   1      }
+ 122          void check_busy(void)                        //检查忙标志函数
+ 123          {
+ 124   1              uchar dt;
+ 125   1              do
+ 126   1              {
+ 127   2                      dt=0xff;
+ 128   2                      E=0;
+ 129   2                      RS=0;        
+ 130   2                      RW=1;
+ 131   2      E=1;
+ 132   2      dt=out;
+ 133   2      }while(dt&0x80);
+ 134   1      E=0;
+ 135   1      }
+ 136          void write_command(uchar com)                 //写命令函数
+ 137          {
+ 138   1      check_busy();
+ 139   1      E=0;
+ 140   1      RS=0;
+ 141   1      RW=0;
+ 142   1      out=com;
+ 143   1      E=1;
+ 144   1      _nop_( );
+ 145   1      E=0;
+ 146   1      delay(1);
+ 147   1      }
+ 148          void write_data(uchar dat)                                 //写数据函数
+ 149          {
+ 150   1              check_busy();
+ 151   1              E=0;
+ 152   1              RS=1;
+ 153   1              RW=0;
+ 154   1              out=dat;
+ 155   1              E=1;
+ 156   1              _nop_();
+ 157   1              E=0;
+ 158   1              delay(1);        
+ 159   1      }
+ 160          void LCD_initial(void)                         //液晶显示器初始化函数
+ 161          {
+ 162   1      write_command(0x38);        //写入命令0x38：8位两行显示，5×7点阵字符
+ 163   1      write_command(0x0C);        //写入命令0x0C：开整体显示，光标关，无黑块
+ 164   1      write_command(0x06);        //写入命令0x06：光标右移
+ 165   1      
+ 166   1      write_command(0x01);                         //写入命令0x01：清屏
+ 167   1      delay(1);
+ 168   1      }
+ 169          void string(uchar ad,uchar *s)        //输出显示字符串的函数
+ 170          {
+ 171   1      write_command(ad);
+ 172   1      while(*s>0)
+ 173   1      {
+ 174   2      write_data(*s++);                        //输出字符串，且指针增1
+ 175   2      delay(50);
+ 176   2      }
+ 177   1      }
+C51 COMPILER V9.59.0.0   KEYBOARD                                                          03/06/2019 18:24:16 PAGE 4   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    648    ----
+   CONSTANT SIZE    =     52    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,116 @@
+C51 COMPILER V9.56.0.0   ________________LED                                               05/19/2017 22:13:22 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE ________________LED
+OBJECT MODULE PLACED IN .\obj\不同频率闪烁多个led.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE 不同频率闪烁多个led.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\o
+                    -bj\不同频率闪烁多个led.lst) TABS(2) OBJECT(.\obj\不同频率闪烁多个led.obj)
+
+line level    source
+
+   1          /*-----------------------------------------------
+   2            名称：IO口高低电平控制
+   3            编写：sandman
+   4            日期：2016.4.24
+   5            修改：无
+   6            内容：点亮P1口的多个LED灯闪烁
+   7                  该程序是单片机学习中最简单最基础的，
+   8              通过程序了解如何控制端口的高低电平
+   9          ------------------------------------------------*/
+  10          #include<reg52.h> //包含头文件，一般情况不需要改动，头文件包含特殊功能寄存器的定义
+  11          
+  12          sbit LED0=P0^0;// 用sbit 关键字 定义 LED到P0.0端口，LED是自己任意定义且容易记忆的符号
+  13          sbit LED1=P0^1;
+  14          sbit LED2=P0^2;
+  15          sbit LED3=P0^3;
+  16          sbit LED4=P0^4;
+  17          sbit LED5=P0^5;
+  18          sbit LED6=P0^6;
+  19          sbit LED7=P0^7;
+  20          
+  21          void Delay(unsigned int t); //函数声明
+  22          /*------------------------------------------------
+  23                              主函数
+  24          ------------------------------------------------*/
+  25          void main (void)
+  26          {
+  27   1                        //此方法使用bit位对单个端口赋值
+  28   1      unsigned char i;  //定义一个无符号字符型局部变量 i 取值范围 0~255
+  29   1      
+  30   1      while (1)         //主循环
+  31   1        {
+  32   2       for(i=0;i<=5;i++)   //加入 for循环，表明for循环大括号中
+  33   2                 //的程序循环执行10次
+  34   2        {
+  35   3        LED0=0;
+  36   3        LED1=1;            //将P0.0口赋值 0，对外输出低电平
+  37   3        LED2=0;
+  38   3        LED3=1;
+  39   3        LED4=0;
+  40   3        LED5=1;
+  41   3        LED6=0;
+  42   3        LED7=1;
+  43   3        Delay(35000);      //调用延时程序；更改延时数字可以更改延时长度；
+  44   3                //用于改变闪烁频率
+  45   3        LED0=1;
+  46   3        LED1=0;           //将P0.0口赋值 1，对外输出高电平
+  47   3        LED2=1;
+  48   3        LED3=0;
+  49   3        LED4=1;
+  50   3        LED5=0;
+  51   3        LED6=1;
+  52   3        LED7=0;                
+  53   3        Delay(50000);
+  54   3        }
+C51 COMPILER V9.56.0.0   ________________LED                                               05/19/2017 22:13:22 PAGE 2   
+
+  55   2      
+  56   2       for(i=0;i<=5;i++)
+  57   2        {
+  58   3        LED0=0;
+  59   3        LED1=1;            //将P0.0口赋值 0，对外输出低电平
+  60   3        LED2=0;
+  61   3        LED3=1;
+  62   3        LED4=0;
+  63   3        LED5=1;
+  64   3        LED6=0;
+  65   3        LED7=1;
+  66   3        Delay(35000);      //调用延时程序；更改延时数字可以更改延时长度；
+  67   3                 //用于改变闪烁频率
+  68   3        LED0=1;
+  69   3        LED1=0;           //将P0.0口赋值 1，对外输出高电平
+  70   3        LED2=1;
+  71   3        LED3=0;
+  72   3        LED4=1;
+  73   3        LED5=0;
+  74   3        LED6=1;
+  75   3        LED7=0;                
+  76   3      
+  77   3        Delay(50000);      
+  78   3        }
+  79   2                           //主循环中添加其他需要一直工作的程序
+  80   2       }
+  81   1      }
+  82          /*------------------------------------------------
+  83           延时函数，含有输入参数 unsigned int t，无返回值
+  84           unsigned int 是定义无符号整形变量，其值的范围是
+  85           0~65535
+  86          ------------------------------------------------*/
+  87          void Delay(unsigned int t)
+  88          {
+  89   1       while(--t);
+  90   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    108    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

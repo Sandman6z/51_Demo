@@ -1,0 +1,27 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: 不同频率闪烁多个led - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\Users\leoovo\AppData\Local\Temp\RSP716D.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Debug/不同频率闪烁多个led.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"E:\STC89C52单片机资料\51单片机及其C语言程序开发实例\7-不同频率闪烁多个LED灯\不同频率闪烁多个led.c"
+]
+Creating command line "cl.exe @C:\Users\leoovo\AppData\Local\Temp\RSP716D.tmp" 
+<h3>Output Window</h3>
+Compiling...
+不同频率闪烁多个led.c
+e:\stc89c52单片机资料\51单片机及其c语言程序开发实例\7-不同频率闪烁多个led灯\不同频率闪烁多个led.c(11) : fatal error C1083: Cannot open include file: 'reg52.h': No such file or directory
+执行 cl.exe 时出错.
+
+
+
+<h3>Results</h3>
+不同频率闪烁多个led.obj - 1 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

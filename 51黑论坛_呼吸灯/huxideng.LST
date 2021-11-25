@@ -1,0 +1,64 @@
+C51 COMPILER V7.06   HUXIDENG                                                              12/08/2017 18:04:04 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE HUXIDENG
+OBJECT MODULE PLACED IN huxideng.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE huxideng.c BROWSE DEBUG OBJECTEXTEND
+
+stmt level    source
+
+   1          #include<reg51.h> 
+   2          void Delay1(int del)
+   3          {
+   4   1              int i,j;
+   5   1              for(i=0; i<del; i++)
+   6   1              for(j=0; j<1827; j++)   
+   7   1              ;
+   8   1      }
+   9          void Delay(unsigned int t)
+  10          {
+  11   1       while(--t);
+  12   1      }
+  13           //函数声明
+  14          unsigned int z,y;
+  15          void main (void)//主函数
+  16          {
+  17   1              unsigned int CYCLE=400,PWM_LOW=0;//定义周期并赋值
+  18   1              while (1)         //主循环
+  19   1              {
+  20   2      
+  21   2      /*--------整排LED灯呼吸---------*/
+  22   2                      
+  23   2                      Delay1(100);                                                            //加延时，可以看到熄灭的过程（下面程序同理）
+  24   2                      for(PWM_LOW=1;PWM_LOW<CYCLE;PWM_LOW++)          //PWM_LOW表示低
+  25   2                              { 
+  26   3                                      P1=0x00;                                        
+  27   3                                      Delay(PWM_LOW);
+  28   3                                      P1=0xff; 
+  29   3                                      Delay(CYCLE-PWM_LOW);
+  30   3                              }
+  31   2                      P1=0xff;                                                                                
+  32   2                      for(PWM_LOW=CYCLE-1;PWM_LOW>0;PWM_LOW--)        //与逐渐变亮相反的过程
+  33   2                              {
+  34   3                                      P1=0x00;                                                        //点亮LED 
+  35   3                                      Delay(PWM_LOW);
+  36   3                                      P1=0xff;                                                        //熄灭LED
+  37   3                                      Delay(CYCLE-PWM_LOW);                           //主循环中添加其他需要一直工作的程序，延时长度，600次循环中从599减至1
+  38   3                              }
+  39   2      
+  40   2      }
+  41   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    151    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
